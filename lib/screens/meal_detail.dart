@@ -1,25 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meals/models/meal.dart';
+import 'package:meals/providers/favorites_provider.dart';
 import 'package:transparent_image/transparent_image.dart';
 
-class MealDetailScreen extends StatelessWidget {
+class MealDetailScreen extends ConsumerWidget {
+  const MealDetailScreen({super.key, required this.meal});
 
-  const MealDetailScreen({super.key, required this.onToggleFav ,required this.meal});
-
-  final bool Function(Meal meal) onToggleFav;
   final Meal meal;
 
-
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    bool? wasAdded;
+    
     return Scaffold(
       appBar: AppBar(
         title: Text(
           meal.title,
         ),
         actions: [
-          IconButton(onPressed: (){onToggleFav(meal);}, icon: Icon(Icons.star))
+          IconButton(
+            onPressed: () {
+              bool wasAdded =
+                  ref.read(favoriteProvider.notifier).toggleFav(meal);
+
+              ScaffoldMessenger.of(context).clearSnackBars();
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(wasAdded
+                      ? "Meal added to favorites"
+                      : "Meal removed from favorites")));
+            },
+            icon:!((wasAdded == null) || (wasAdded = false))
+                ? const Icon(Icons.star)
+                : const Icon(Icons.star_outline),
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -71,7 +85,7 @@ class MealDetailScreen extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 child: Text(
-                  "${meal.steps.indexOf(step)+1}. ${step}",
+                  "${meal.steps.indexOf(step) + 1}. ${step}",
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         color: Theme.of(context).colorScheme.onBackground,
