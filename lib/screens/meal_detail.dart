@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meals/models/meal.dart';
 import 'package:meals/providers/favorites_provider.dart';
-import 'package:transparent_image/transparent_image.dart';
 
 class MealDetailScreen extends ConsumerWidget {
   const MealDetailScreen({super.key, required this.meal});
@@ -11,8 +10,9 @@ class MealDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    bool? wasAdded;
-    
+    final favoriteMeals = ref.watch(favoriteProvider);
+    bool isFavorite = favoriteMeals.contains(meal);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -20,33 +20,41 @@ class MealDetailScreen extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            onPressed: () {
-              bool wasAdded =
-                  ref.read(favoriteProvider.notifier).toggleFav(meal);
+              onPressed: () {
+                bool wasAdded =
+                    ref.read(favoriteProvider.notifier).toggleFav(meal);
 
-              ScaffoldMessenger.of(context).clearSnackBars();
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(wasAdded
-                      ? "Meal added to favorites"
-                      : "Meal removed from favorites")));
-            },
-            icon:!((wasAdded == null) || (wasAdded = false))
-                ? const Icon(Icons.star)
-                : const Icon(Icons.star_outline),
-          ),
+                ScaffoldMessenger.of(context).clearSnackBars();
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(wasAdded
+                        ? "Meal added to favorites"
+                        : "Meal removed from favorites")));
+              },
+              icon: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder: (child, animation) => RotationTransition(
+                        // turns: animation,
+                        turns: Tween<double>(begin: 0.5, end: 1)
+                            .animate(animation),
+                        child: child,
+                      ),
+                  child: Icon(
+                    (isFavorite) ? Icons.star : Icons.star_border,
+                    key: ValueKey(isFavorite),
+                  ))),
         ],
       ),
       body: SingleChildScrollView(
         child: Column(
           // crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            FadeInImage(
-              height: 200,
-              width: double.infinity,
-              placeholder: MemoryImage(kTransparentImage),
-              fit: BoxFit.cover,
-              image: NetworkImage(
+            Hero(
+              tag: meal.id,
+              child: Image.network(
                 meal.imageUrl,
+                height: 300,
+                width: double.infinity,
+                fit: BoxFit.cover,
               ),
             ),
             const SizedBox(
